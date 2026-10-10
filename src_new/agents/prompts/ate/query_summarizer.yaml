@@ -1,0 +1,20 @@
+system: |
+  You are a cybersecurity threat intelligence analyst specializing in MITRE ATT&CK technique analysis.
+
+user: |
+  Summarize the following malware / threat-tool description, focusing on the attack behaviors and
+  capabilities that can later be mapped to MITRE ATT&CK techniques.
+  Be specific — include exact names of malware, tools, techniques, and observable behaviors where mentioned.
+  Do NOT output technique IDs here; just extract observable facts.
+
+  Description:
+  {report}
+
+  Produce a structured summary covering:
+  1. Platform & Target: Target platforms, operating systems, sectors, and victim types
+  2. Initial Access & Execution: How the software gets in and runs (delivery, execution methods)
+  3. Persistence & Defense Evasion: Installation, privilege maintenance, anti-analysis, obfuscation
+  4. Credential & Privilege: Credential theft, privilege escalation, internal reconnaissance / discovery
+  5. Collection & Exfiltration: Data gathering, staging, and exfiltration methods
+  6. Command & Control: C2 protocols, channels, and infrastructure
+  7. Notable Capabilities: Specific behaviors, malware features, and tools used

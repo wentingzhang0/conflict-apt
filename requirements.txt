@@ -1,0 +1,8 @@
+numpy
+networkx
+scikit-learn
+weaviate-client
+langchain-huggingface
+openai
+pyyaml
+pytest

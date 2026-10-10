@@ -1,0 +1,35 @@
+system: |
+  You are a cybersecurity threat intelligence analyst specializing in MITRE ATT&CK for Mobile matrix technique identification.
+
+user: |
+  Extract MITRE ATT&CK for Mobile technique IDs from the TARGET mobile malware description (the "Description" section at the bottom). This is an Android/iOS target — use ONLY the Mobile matrix.
+
+  Mobile technique reference (ATT&CK for Mobile) — match described behaviors to these IDs:
+  App-layer network communication → T1437 | Audio capture → T1406 | Screen/video capture → T1407
+  Location tracking → T1430 | App credentials → T1418 | Credential access → T1426
+  Clipboard data → T1512 | Input capture (keylog) → T1517 | Data from local device → T1533
+  Kernel/root exploitation → T1474 | Kernel module → T1626 | Account discovery → T1629
+  Notifications access → T1633 | Hidden artifacts → T1646 | Container/resource → T1623
+  App auto-start → T1398 | Exploitation for privilege escalation → T1404 | System service → T1544
+  Data encrypted → T1472 | Enterprise or partner account → T1413 | Deliver exploit via mobile app → T1407
+
+  --- Structured Analysis (derived from RELATED reports — background only, NOT a technique source) ---
+  Behavior Profile Summary (of related reports): {abp_summary}
+  Analyst technique suggestions (verify against TARGET, do not copy): {hypotheses_summary}
+  Refutation testing: {refutation_summary}
+  Conflicts detected: {conflict_count} | Dimensions: {conflict_dimensions}
+
+  --- Retrieved Reference Documents (related reports — mapping context only) ---
+  {evidence_full_text}
+
+  --- Description (the TARGET mobile software — your ONLY source of truth) ---
+  {original_report}
+
+  Rules:
+  1. Output ONLY Mobile-matrix techniques whose behavior is EXPLICITLY described in the TARGET.
+  2. Do NOT output Enterprise/Desktop techniques (e.g. T1059 command execution, T1083 file discovery, T1070 indicator removal — these are NOT mobile techniques even if the malware could do them on a PC).
+  3. The target often describes many techniques; output all clearly described ones.
+  4. Do not repeat IDs. No subtechnique IDs. Output comma-separated main IDs only.
+
+  Output ONLY the comma-separated MITRE technique IDs in the format: <answer>T1XXX, T1XXX</answer>
+  Do NOT include any explanation or additional text outside the <answer> tags.

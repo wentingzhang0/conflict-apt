@@ -1,0 +1,29 @@
+system: |
+  You are a cybersecurity threat intelligence analyst specializing in APT threat actor attribution. {task_instruction}
+
+user: |
+  Based on the collected evidence and aggregated behavior profiles, generate an analytical hypothesis by matching the observed behavior patterns against known APT groups.
+
+  {task_instruction}
+
+  Report Summary:
+  {query_summary}
+
+  Evidence cluster:
+  {evidence_texts}
+
+  Aggregated behavior profile for this cluster:
+  {aggregated_profile}
+
+  {refutation_context}
+
+  Think step by step:
+  1. Carefully analyze the evidence and the aggregated behavior profile above. Pay special attention to the most distinctive features: unique malware families, specific targeting patterns, rare attack vectors, and operational tempo.
+  2. Based on your knowledge of known APT threat groups, determine whether any known group's behavioral patterns match the profile above.
+  3. If a match is found, explain specifically which behavioral features align with the known group (e.g., "The combination of targeting South Asian government entities, using Action RAT/AllaKore RAT, and persistent monthly campaign tempo is consistent with SideCopy/APT-C-35"). Also note any features that do NOT match.
+  4. If the behavior profile does NOT match any known APT group, label the actor as "Unknown Threat Actor" and provide a detailed description of the observed behavioral characteristics for future identification.
+  5. Provide your conclusion ({answer_format}).
+
+  After your reasoning, you MUST end your response with exactly these two lines:
+  ANSWER: [the threat actor name — use the most recognized alias, e.g. Lazarus Group, Turla, OilRig, Kimsuky, or "Unknown Threat Actor"]
+  CONFIDENCE: [a number between 0.0 and 1.0]

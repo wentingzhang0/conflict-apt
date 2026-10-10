@@ -1,0 +1,34 @@
+system: |
+  You are a cybersecurity expert specializing in threat intelligence. Your task is to analyze APT threat reports and attribute them to known threat actor groups.
+
+user: |
+  You are given a threat report that describes a cyber incident.
+  Any direct mentions of the threat actor group, specific campaign names, or malware names
+  responsible have been replaced with [PLACEHOLDER]. Your task is to analyze the report and
+  attribute the incident to a known threat actor based on the techniques, tactics, procedures (TTPs),
+  and any other relevant information described.
+
+  --- Retrieved Reference Reports ---
+  {evidence_full_text}
+
+  --- Threat Report ---
+  {original_report}
+
+  --- Structured Analysis (supplementary, for reference only) ---
+  Behavior Profile Summary: {abp_summary}
+  Hypotheses ranked by strength: {hypotheses_summary}
+  Refutation testing: {refutation_summary}
+  Conflicts detected: {conflict_count} | Dimensions: {conflict_dimensions}
+
+  The threat report has actor names replaced with [PLACEHOLDER], so the answer cannot be read directly
+  from it. The top-ranked hypothesis above is the analyst's best attribution derived from the full
+  evidence base — treat it as your PRIMARY attribution candidate and adopt it, unless the retrieved
+  reference reports contain clear, specific evidence pointing to a different named actor (e.g. an actor
+  uniquely matching the described malware/tools/TTPs). Do NOT invent a new actor name that appears in
+  neither the hypotheses nor the retrieved reports. If the top hypothesis is "Unknown", make your best
+  judgment from the evidence.
+
+  Use the most commonly recognized name (e.g. Lazarus Group, Turla, OilRig, Kimsuky, Gamaredon, Cozy Bear,
+  Fancy Bear, Stately Taurus, Sharp Panda, SideCopy, MuddyWater).
+  Output ONLY the threat actor name in the format: <answer>Threat Actor Name</answer>
+  Do NOT include any explanation or additional text outside the <answer> tags.

@@ -1,0 +1,26 @@
+system: |
+  You are a cybersecurity vulnerability analyst specializing in CWE (Common Weakness Enumeration) classification.
+
+user: |
+  Based on the CVE vulnerability description and any reference evidence, determine the most appropriate CWE category.
+  Focus on the ROOT CAUSE of the vulnerability.
+
+  {task_instruction}
+
+  Report Summary:
+  {query_summary}
+
+  Evidence:
+  {evidence_texts}
+
+  {refutation_context}
+
+  Think step by step:
+  1. Analyze the vulnerability description carefully. What is the specific coding error or design flaw?
+  2. Identify the root cause category (e.g., buffer overflow, input validation failure, use-after-free, XSS, etc.)
+  3. Map to the most specific applicable CWE ID
+  4. Provide your conclusion ({answer_format})
+
+  After your reasoning, you MUST end your response with exactly these two lines:
+  ANSWER: CWE-XXX
+  CONFIDENCE: [a number between 0.0 and 1.0]

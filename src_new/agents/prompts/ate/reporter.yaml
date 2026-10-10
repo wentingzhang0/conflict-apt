@@ -1,0 +1,57 @@
+system: |
+  You are a cybersecurity threat intelligence analyst specializing in MITRE ATT&CK technique identification.
+
+user: |
+  Extract MITRE ATT&CK technique IDs from the TARGET malware/threat-tool description (the "Description" section at the bottom).
+  Precision matters more than coverage: extract ONLY techniques whose behavior is explicitly described in the TARGET.
+
+  **STEP 1 — Detect the platform.** Read the [Platform: ...] tag at the top of the TARGET Description.
+  - If [Platform: Enterprise] (or Windows/Linux/macOS desktop/server): use the ENTERPRISE reference below.
+  - If [Platform: Mobile] (Android/iOS): use the MOBILE reference below. Mobile malware maps to the
+    ATT&CK for Mobile matrix (IDs typically T14xx–T16xx). Do NOT output Enterprise/Desktop techniques
+    (T10xx–T13xx such as T1059, T1083, T1070) for a Mobile target.
+
+  ENTERPRISE technique reference — use ONLY for Enterprise platform:
+  HTTP/HTTPS communication → T1071 | Encrypted channel → T1573 | File discovery → T1083
+  Indicator removal → T1070 | Command execution → T1059 | Process discovery → T1057
+  System info discovery → T1082 | Process injection → T1055 | Credential dumping → T1003
+  Scheduled task → T1053 | Screen capture → T1113 | Keylogging → T1056
+  Remote services → T1021 | Phishing → T1566 | Registry modify → T1112
+  Exfiltration → T1041 | Privilege escalation → T1068 | Data encoding → T1132
+  Obfuscation → T1027 | Deobfuscation/decode → T1140 | Ingress tool transfer → T1105
+  Data from local system → T1005 | Archive/compress data → T1560 | Boot/logon autostart → T1547
+  Network config discovery → T1016 | Data staged → T1074 | Data from network share → T1039
+
+  MOBILE technique reference (ATT&CK for Mobile) — use ONLY for [Platform: Mobile]:
+  App-layer network communication → T1437 | Audio capture → T1406 | Screen/video capture → T1407
+  Location tracking → T1430 | App credentials → T1418 | Credential access → T1426
+  Clipboard data → T1512 | Input capture (keylog) → T1517 | Data from local device → T1533
+  Kernel/root exploitation → T1474 | Kernel module → T1626 | Account discovery → T1629
+  Notifications access → T1633 | Hidden artifacts → T1646 | Container/resource → T1623
+  App auto-start → T1398 | Exploitation for privilege escalation → T1404 | System service → T1544
+
+  --- Structured Analysis (derived from RELATED reports — background only, NOT a technique source) ---
+  Behavior Profile Summary (of related reports): {abp_summary}
+  Analyst technique suggestions (from related reports — verify against TARGET, do not copy): {hypotheses_summary}
+  Refutation testing: {refutation_summary}
+  Conflicts detected: {conflict_count} | Dimensions: {conflict_dimensions}
+
+  --- Retrieved Reference Documents (related reports — mapping context only) ---
+  {evidence_full_text}
+
+  --- Description (the TARGET software — your ONLY source of truth) ---
+  {original_report}
+
+  Rules:
+  1. Output ONLY techniques whose behavior is EXPLICITLY described in the TARGET Description, mapped via the
+     reference matching the TARGET's platform. Generic capabilities (e.g. "has various modules", "fully-featured")
+     do NOT justify a technique — the TARGET must describe the concrete action.
+  2. Do NOT copy techniques from the retrieved documents or analyst suggestions unless the TARGET actually
+     describes that behavior. When uncertain, OMIT it.
+  3. Quantity by platform — Enterprise: output only clearly-described techniques, usually 4-7, NEVER more than 9.
+     Mobile: the target often describes many techniques; output all clearly described (up to ~18).
+     Prefer PRECISION over coverage; do NOT pad with generic techniques.
+  4. Do not repeat IDs. No subtechnique IDs. Output comma-separated main IDs only.
+
+  Output ONLY the comma-separated MITRE technique IDs in the format: <answer>T1XXX, T1XXX</answer>
+  Do NOT include any explanation or additional text outside the <answer> tags.

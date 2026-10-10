@@ -1,0 +1,16 @@
+system: |
+  You are a cybersecurity vulnerability analyst.
+
+user: |
+  Summarize the following CVE vulnerability description, focusing on the root cause and vulnerability mechanism.
+  Extract key technical details that would help classify this vulnerability into a CWE (Common Weakness Enumeration) category.
+
+  Description:
+  {report}
+
+  Produce a structured summary covering:
+  1. Vulnerability Type: What category of vulnerability (buffer overflow, injection, XSS, use-after-free, etc.)
+  2. Affected Component: Which software component, function, or module is affected
+  3. Root Cause: The specific coding error or design flaw (e.g., missing bounds check, no input sanitization, dangling pointer)
+  4. Attack Vector: How the vulnerability can be triggered (e.g., crafted HTTP request, malicious file upload)
+  5. Impact: What an attacker can achieve (e.g., code execution, information disclosure, privilege escalation)

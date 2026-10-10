@@ -1,0 +1,127 @@
+# =============================================================================
+# new_src 独立配置 —— 冲突感知多智能体 CTI 分析方法（新版方案落地）
+# 与旧 src/ 隔离；本文件承载全局共享参数（保障评估公平）+ 本方法专属阈值/权重。
+# 标注 # TODO 的字段为部署/环境相关，需按实际填写；其余为方法默认值占位，
+# 最终值由消融（A2/A3/C3 等）在验证集标定后随评估一并报告。
+# =============================================================================
+
+# ---------- 模型与基础设施 ----------
+models:
+  chat_model:
+    GRAPHRAG_API_KEY: "EMPTY"
+    api_base: "http://localhost:8213/v1"   # vLLM OpenAI 兼容端点
+    model_name: "GLM-4-9B"                 # vLLM 实际暴露的模型 id
+    max_single_time: 200
+    max_tokens: 2048
+    max_context_tokens: 8192
+    default_retries: 3
+    seed: 42                             # 请求级采样 seed（P0 统一：temperature>0 调用可复现）
+    repetition_penalty: 1.1            # 重复惩罚(>1 抑制 token 重复)：缓解 ATE 的 T-ID 退化(重复/枚举)；对所有方法统一生效
+    enable_thinking: false             # Qwen3 思考开关：false 关(复杂请求 ~15s→7s)，true 开(归因推理更充分)
+  embedding_model:
+    path: "/opt/share/models/BAAI/bge-m3"  # 本地 BGE-M3
+    dimension: 512
+    device: "cuda"
+    cuda_visible_devices: "6"
+  weaviate_model:
+    url: "http://localhost:8011"            # Weaviate 实例
+    class_name: "APT"                       # Weaviate class 名
+
+# LLM 输入输出日志（调试用，评估时可关闭）
+llm_log:
+  enabled: false
+  path: "logs/new_src_llm_io.log"
+
+# ---------- 全局共享参数（主方法与所有基线共用，保障评估公平） ----------
+global:
+  top_k: 10                           # 初始检索条数（全方法统一）
+  retrieval_mode: "hybrid"            # semantic / keyword / hybrid
+  hybrid_alpha: 0.4                   # 语义权重（RRF 融合）
+  timeout: 1800                        # 单样本超时（秒），主方法和所有 baseline 统一
+
+# ---------- 本方法专属 pipeline 参数 ----------
+pipeline:
+
+  # —— 检索（创新点 3 扩展池） ——
+  retrieval:
+    top_k_expand: 20                  # 反例扩展池检索条数（> top_k，扩大召回）
+
+  # —— 查询摘要 ——
+  query_summarizer:
+    report_max_length: 6000
+
+  # —— 编排器 ——
+  orchestrator:
+    max_iterations: 2
+    fallback_conclusion_no_evidence: "No relevant evidence found."
+    refutation_continue_threshold: 0.5
+
+  # —— 带符号图 ——
+  signed_graph:
+    modulation:
+      base_weight_c: 0.5              # 边权调制基础权重 c
+
+  # —— 创新点 1：自适应控制（PATH/DEPTH 单轴推理强度；原 ROUTING 旋钮已删除） ——
+  adaptive:
+    frustration_rebuttal_gate: 0.15   # θ₁：Φ<θ₁ → I=0（不反驳）
+    frustration_depth2: 0.35          # θ₂：仅当 i_max≥2 时区分中/高两档；i_max=1 时为无效项
+    rebuttal_max_rounds: 1            # I_max=1：最多 1 轮反驳（DEPTH 退化为 Φ<θ₁→0、否则→1 的二值）
+    # 任务自适应深度门槛（方案 3.1.3/3.1.8）：同一 Φ 在不同任务可对应不同深度；
+    # 缺省回退上面的全局默认。最终值由消融 A2 按任务分别标定。
+    depth_thresholds:
+      taa: {theta1: 0.15, theta2: 0.35, i_max: 1}
+      ate: {theta1: 0.15, theta2: 0.35, i_max: 0}   # ATE 不反驳：技术提取无需反例证伪，省去扩展池检索+ABP(慢)，保留建图+分区+多假设
+      rcm: {theta1: 0.15, theta2: 0.35, i_max: 1}
+      mcq: {theta1: 0.15, theta2: 0.35, i_max: 0}   # MCQ 不反驳：知识召回任务，归因反例证伪无增益（同 ATE 理由），省去扩展池检索+ABP
+    decay: 0.85                       # 传递性推理路径权重衰减
+    # 任务自适应由上面 per-task 的 depth_thresholds(θ₁/θ₂/I_max) 承担（方案 3.1.8）：
+    # 同一 Φ 在不同任务可对应不同深度，无需额外加权度量（原 task_dim_weights/C 已删除）。
+
+  # —— 分析报告（④）：固定双通道 token 预算（方案 8.2，回锚量不随冲突自适应） ——
+  reporter:
+    max_context_tokens: 8192          # 全局 token 上限（缺省取 models.chat_model.max_context_tokens）
+    char_per_token: 3                 # 字符/token 估算：budget_chars = max_input_tokens×3 − 报告 − 模板
+    template_overhead_chars: 1500     # prompt 模板固定开销（字符）
+    report_max_chars: 6000            # 通道 1 原始报告截断字符上限（不主动摘要）
+    per_evidence_max: 1500            # 每条证据截断字符上限
+    retries: 2                        # 答案无效重试上限
+
+  # —— 创新点 3：图条件证伪 ——
+  refutation:
+    theta_H: 0.1                      # 图级稳定性阈值（Δh_graph>θ_H → unstable）；消融 C3 标定
+    overlap_merge: 0.7                # 假设证据重叠度合并阈值（Jaccard）
+    min_consistency_build_edge: 0.3   # 传递性补全一致性低于此值则不建边
+
+  # —— 假设评估 ——
+  evaluation:
+    alpha: 0.5                        # 混合评分 α×h_graph + (1−α)×llm_score（h_graph 已归一化到[0,1]）
+    eval_samples: 3                   # LLM 多维评估采样次数（取中位）
+
+  # —— 图量化强度 h_graph（创新点 3，方案 3.3：h_graph=|C_h|·ρ_h − λ·κ_h） ——
+  h_graph:
+    pressure_lambda: 0.5              # λ：conflict 压力项系数（κ_h 的权重）
+
+  # —— 确定性冲突匹配阈值（创新点 2 规范键，两档：confirmed/none） ——
+  canonical_match:
+    behavior_jaccard_support: 0.5     # behavior 维 Jaccard≥此 → support(confirmed)；否则 none（不同行为不构成冲突）
+
+  # —— 创新点 4（v3）：欺骗感知的可信度审查（结构定罪 + 语义豁免；默认关闭=会议版逐字节等价） ——
+  deception:
+    enable: false                        # 会议版等价开关（默认关；期刊版实验开启）
+    dup_cos_threshold: 0.85              # τ_dup：CORE-1 跨来源近重复判定（content 嵌入余弦）
+    dup_cos_high: 0.90                   # τ_high：结构强证据区——⑤ 非 credible 即隔离
+    core2_enable: false                  # CORE-2 归因-内容分歧（已证伪，默认关，详见方案 §9 复盘）
+    core2_div_threshold: 0.60            # τ_div（C1）：与同归因跨源盟友质心的分歧阈值
+    core2_actor_threshold: 0.45          # τ_actor（C2）：与组织史质心 μ_A 的分歧阈值
+    core2_band_lo: 0.70                  # C3 共发带下界（上界即 τ_dup）
+    core2_actor_corpus_k: 8              # μ_A 构建取 BM25 命中前 k 篇（≥3 才启用 C2）
+    bypass_adjudication: false            # D1 旁路：弱裁决骨干置 true（CORE-1 对端直接隔离）
+    max_adjudications: 3                 # M：每 query 裁决预算（⑤ 调用上限）
+    adjudication_retries: 2              # ⑤ JSON 解析失败重试上限
+    reliability_multipliers:             # verdict → 乘子 η（降权通道）
+      credible: 1.0
+      suspicious: 0.7
+      deceptive: 0.3
+    reliability_clamp: [0.2, 1.0]        # [r_min, r_max]：钳位下限（可疑节点仍参与分区）
+    dup_independence: 0.3                # 近重复互证 support 边的独立性折扣 ι
+    same_source_independence: 0.7        # 同源预标注边的固定 ι（同厂商两篇不算独立印证）

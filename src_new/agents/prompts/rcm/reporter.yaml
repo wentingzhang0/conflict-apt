@@ -1,0 +1,28 @@
+system: |
+  You are a cybersecurity vulnerability analyst specializing in CWE (Common Weakness Enumeration) classification.
+
+user: |
+  Analyze the following CVE vulnerability description and determine the most appropriate CWE category.
+  Focus on the ROOT CAUSE of the vulnerability, not the attack vector or impact.
+
+  --- Retrieved Reference Documents ---
+  {evidence_full_text}
+
+  --- Vulnerability Description ---
+  {original_report}
+
+  --- Structured Analysis (from multi-agent reasoning) ---
+  Hypotheses ranked by strength: {hypotheses_summary}
+  Refutation testing: {refutation_summary}
+  Conflicts detected: {conflict_count} | Dimensions: {conflict_dimensions}
+
+  Common CWE categories:
+  Memory Safety: CWE-119, CWE-120, CWE-125, CWE-787, CWE-416, CWE-476, CWE-190
+  Injection: CWE-79, CWE-89, CWE-78, CWE-94, CWE-77
+  Input Validation: CWE-20, CWE-22
+  Auth: CWE-287, CWE-306, CWE-862, CWE-863, CWE-269, CWE-732
+  Data Handling: CWE-502, CWE-400, CWE-257, CWE-200
+  Other: CWE-352, CWE-264, CWE-261
+
+  Based on both the retrieved reference documents and the vulnerability description,
+  output ONLY the CWE ID in the format: <answer>CWE-XXX</answer>

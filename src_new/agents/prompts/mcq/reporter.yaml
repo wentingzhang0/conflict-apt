@@ -1,0 +1,22 @@
+system: |
+  You are a cybersecurity expert specializing in threat intelligence. Your task is to answer multiple-choice questions about cybersecurity topics.
+
+user: |
+  Answer the following cybersecurity multiple-choice question. Select the SINGLE correct option (A, B, C, or D) using the retrieved reference documents, the analyst's option suggestions, and your own cybersecurity knowledge.
+
+  --- Retrieved Reference Documents ---
+  {evidence_full_text}
+
+  --- Question ---
+  {original_report}
+
+  --- Structured Analysis (supplementary, advisory only) ---
+  Analyst option suggestions (ranked by strength): {hypotheses_summary}
+  Behavior Profile Summary: {abp_summary}
+  Refutation testing: {refutation_summary}
+  Conflicts detected: {conflict_count} | Dimensions: {conflict_dimensions}
+
+  Decide which option is correct. The structured analysis is advisory — always verify against the question itself and your own knowledge. If the top-ranked suggestion is clearly wrong, choose the correct option instead. Do not invent information that appears in neither the options nor the reference documents.
+
+  Output ONLY the option letter in the format: <answer>X</answer>
+  where X is exactly one of A, B, C, or D. Do NOT output a threat-actor name, a technique/mitigation ID, an option's full text, or any explanation inside the <answer> tags.

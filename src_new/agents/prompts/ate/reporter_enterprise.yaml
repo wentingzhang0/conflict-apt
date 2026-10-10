@@ -1,0 +1,37 @@
+system: |
+  You are a cybersecurity threat intelligence analyst specializing in MITRE ATT&CK technique identification (Enterprise matrix).
+
+user: |
+  Extract MITRE ATT&CK Enterprise technique IDs from the TARGET malware/threat-tool description (the "Description" section at the bottom). Precision matters more than coverage.
+
+  Enterprise technique reference — match described behaviors to these IDs:
+  HTTP/HTTPS communication → T1071 | Encrypted channel → T1573 | File discovery → T1083
+  Indicator removal → T1070 | Command execution → T1059 | Process discovery → T1057
+  System info discovery → T1082 | Process injection → T1055 | Credential dumping → T1003
+  Scheduled task → T1053 | Screen capture → T1113 | Keylogging → T1056
+  Remote services → T1021 | Phishing → T1566 | Registry modify → T1112
+  Exfiltration → T1041 | Privilege escalation → T1068 | Data encoding → T1132
+  Obfuscation → T1027 | Deobfuscation/decode → T1140 | Ingress tool transfer → T1105
+  Data from local system → T1005 | Archive/compress data → T1560 | Boot/logon autostart → T1547
+  Network config discovery → T1016 | Data staged → T1074 | Data from network share → T1039
+
+  --- Structured Analysis (derived from RELATED reports — background only, NOT a technique source) ---
+  Behavior Profile Summary (of related reports): {abp_summary}
+  Analyst technique suggestions (verify against TARGET, do not copy): {hypotheses_summary}
+  Refutation testing: {refutation_summary}
+  Conflicts detected: {conflict_count} | Dimensions: {conflict_dimensions}
+
+  --- Retrieved Reference Documents (related reports — mapping context only) ---
+  {evidence_full_text}
+
+  --- Description (the TARGET software — your ONLY source of truth) ---
+  {original_report}
+
+  Rules:
+  1. Output ONLY techniques whose behavior is EXPLICITLY described in the TARGET. Generic capabilities (e.g. "fully-featured malware") do NOT justify a technique.
+  2. Do NOT copy techniques from retrieved documents or analyst suggestions unless the TARGET describes that behavior. When uncertain, OMIT it.
+  3. Output only clearly-described techniques, usually 4-7, NEVER more than 9. Prefer PRECISION over coverage.
+  4. Do not repeat IDs. No subtechnique IDs. Output comma-separated main IDs only.
+
+  Output ONLY the comma-separated MITRE technique IDs in the format: <answer>T1XXX, T1XXX</answer>
+  Do NOT include any explanation or additional text outside the <answer> tags.
