@@ -1,17 +1,17 @@
 """
-④ 分析报告智能体 Reporter Agent（出口，固定双通道，方案 4.6 / 8.2）
+④ 分析报告智能体 Reporter Agent（出口，固定双通道）
 
-固定双通道（原 ROUTING 旋钮已删除，回锚量不再随冲突 C 自适应）：
-- 通道 1（主要）：原始报告全文（截断到字符上限，不主动摘要）+ 完整证据文本（每条截断、
+- 通道 1（主要）：原始报告全文（截断到字符上限）+ 完整证据文本（每条截断、
   总量受固定 token 预算约束，超出截断尾部证据）。
 - 通道 2（辅助）：假设摘要、反驳日志、ABP 摘要、冲突统计、任务上下文。
-token 预算：budget_chars = max_input_tokens × 3 − 报告长度 − 模板开销（方案 8.2）。
+token 预算：budget_chars = max_input_tokens × 3 − 报告长度 − 模板开销。
 LLM 生成 → 答案提取（无效重试，带上限）→ 标准化（去别名/前缀）→ ATE 防退化。
 """
 import re
 
 from src_new.agents.base import BaseAgent
 from src_new.core.awm import AWM
+from src_new.core.apt_groups import candidate_groups_text
 from src_new.utils.llm_client import chat
 from src_new.utils.settings import get_task_prompt, get_pipeline_param, get_settings, get_prompt
 
@@ -51,6 +51,7 @@ class ReporterAgent(BaseAgent):
                                 else self._refutation_summary(awm)),
             conflict_count=0 if dis_ch2 else len(awm.get_negative_edges()),
             conflict_dimensions=("none" if dis_ch2 else self._conflict_dims(awm)),
+            candidate_groups=candidate_groups_text(),
         )
         system = prompts["system"]
 

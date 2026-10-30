@@ -1,33 +1,16 @@
 """
-创新点 4（v2）：欺骗感知的可信度审查 —— CORE → ADJUDGE → QUARANTINE
+欺骗感知的可信度审查 —— CORE → ADJUDGE → QUARANTINE（确定性部分）
 
-v1（结构异常四特征 FLAG→REWEIGH）经真实投毒实验证伪：假旗报告与全图呈
-support 连接（归因别名被 LLM 混入查询组织、时间线重叠），Φ≈0、k=1，
-阵营内敌意/挫折贡献/行为疏离全部为零；且 k=1 时"只降权"无假设可重排，
-poison 文本仍进假设与报告的 prompt。失败复盘见 improve_reference/更新方案.md §11。
+- CORE-1 近重复互证检测：跨来源（source 不同）且内容嵌入 cos>τ_dup 的文档对。
+  协同假旗的多篇报告出自同一生成器，内容近重复是其结构指纹；同报告多 chunk
+  有相同 source，预标注排除。
+- CORE-2 归因-内容分歧检测（默认关闭）：C1 盟友分歧 / C2 组织史分歧 /
+  C3 同归因共发带，三个嵌入几何子信号。
+- ADJUDGE（⑤）语义豁免（credibility_agent）：LLM 只负责找无害解释
+  （转载/同系列/学术分歧/新战役）；定罪证据来自确定性层。
+- QUARANTINE 隔离：非 credible 节点退出证据组装（假设生成/报告），图与权重保留。
 
-v2 机制（本模块为确定性部分）：
-- CORE-1 近重复互证检测：**跨来源**（source 不同）且内容嵌入 cos>τ_dup 的文档对。
-  攻击者单枪匹马伪造"多源印证"时，多篇假报告出自同一生成器——内容近重复是
-  协同假旗的结构指纹。同报告多 chunk（Weaviate 分块产物）有相同 source，
-  预标注即排除，不误伤（实测语料 1413 个多 chunk 报告全部同 source）。
-- CORE-2 归因-内容分歧检测（v3，确定性，零 LLM）：假旗的不变量是"内容必须复制
-  真实事件才可检索、归因必须嫁祸替罪组织才成攻击"——内容锚在事件簇、归因锚在
-  替罪羊簇，双向分歧可被嵌入几何直接观测。三个子信号：
-  C1 盟友分歧：检索集内同归因跨源盟友存在时，内容与盟友质心 cos<τ_div；
-  C2 组织史分歧：内容与该组织在干净语料的历史内容质心 μ_A cos<τ_actor
-  （μ_A=BM25(组织名)于 APT class 取文嵌入质心，排除 poison）；
-  C3 同归因共发带：跨来源同归因对 cos∈[τ_band_lo, τ_dup)——自适应攻击者把
-  近重复压到 τ_dup 下，共发指纹仍在。补齐 CORE-1 的两个逃逸面（单篇注入、
-  风格分化）与 ⑤ 的骨干校准依赖（四骨干实证：定罪率 23%~93% 随对齐质量波动）。
-- ADJUDGE（⑤）语义豁免（credibility_agent）：骨干 LLM 只负责找无害解释
-  （辛迪加转载/同系列/正当学术分歧/新战役），verdict!=credible 即隔离——
-  定罪证据全部来自确定性层，语义层不承担定罪职责。
-- QUARANTINE 隔离：deceptive 节点从证据组装（假设生成/报告/ABP 摘要）中剔除，
-  图与权重保留（可解释、可回滚）。降权救不了 k=1 共识场景—— poisoning 的
-  伤害路径是 prompt 组装，隔离必须发生在组装处。
-
-确定性纪律不变：CORE/QUARANTINE 零 LLM 可单测；⑤ 只出类别与理由不出数字。
+CORE/QUARANTINE 零 LLM 可单测；⑤ 只出类别与理由不出数字。
 """
 from __future__ import annotations
 
@@ -431,13 +414,8 @@ def quarantine_set(awm: AWM, adjudications: list[dict],
                    core2_flags: list[dict] | None = None) -> set:
     """被隔离节点集合（图内保留，仅退出组装）。
 
-    判定（v3）：CORE-1 ∪ CORE-2 标记（确定性结构证据）∧ ⑤ 未判 credible。
-    分布依据（全量实测）：poison-pair content cos 中位数 0.867——主战场在
-    0.85~0.90 区段；real-real 跨源对 0.85+ 亦存在（同系列报告/百科重复条目）。
-    两分布重叠 → 静态阈值不可分，precision 由 ⑤ 的 credible 放行承担：
-    suspicious/deceptive 均隔离（无害解释失败），credible 保留。定罪的结构
-    证据全部来自确定性层（近重复互证 / 归因-内容分歧），语义层只负责排除
-    ——延续"确定性控制与 LLM 推理相分离"。
+    判定：CORE-1 ∪ CORE-2 标记（确定性结构证据）∧ ⑤ 未判 credible。
+    suspicious/deceptive 均隔离（无害解释失败），credible 保留。
     """
     flagged = flagged_nodes(awm, core2_flags)
     return {a.get("doc_id") for a in (adjudications or [])
@@ -446,11 +424,10 @@ def quarantine_set(awm: AWM, adjudications: list[dict],
 
 
 def reweigh(awm: AWM, adjudications: list[dict]) -> dict:
-    """v2 保留的降权通道（suspicious 仍只降权不隔离）：
-    verdict→乘子 η 映射 + 钳位 + 全边 reliability 重算 + 跨来源近重复 support 边折扣 ι。
+    """降权通道：verdict→乘子 η 映射 + 钳位 + 全边 reliability 重算 +
+    跨来源近重复/同源 support 边独立性折扣 ι。
 
-    deceptive 的主处置是 QUARANTINE（组装剔除），降权同时生效（双保险：
-    若未来某任务绕过组装隔离直接读图，权重也已塌缩）。
+    隔离判定见 quarantine_set；降权与隔离同时生效。
     """
     evs = {e.doc_id: e for e in awm.evidence_set}
     mult = _cfg("reliability_multipliers",

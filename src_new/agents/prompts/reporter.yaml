@@ -14,21 +14,23 @@ user: |
   --- Threat Report ---
   {original_report}
 
-  --- Structured Analysis (supplementary, for reference only) ---
+  --- Structured Analysis (supplementary) ---
   Behavior Profile Summary: {abp_summary}
   Hypotheses ranked by strength: {hypotheses_summary}
   Refutation testing: {refutation_summary}
   Conflicts detected: {conflict_count} | Dimensions: {conflict_dimensions}
 
   The threat report has actor names replaced with [PLACEHOLDER], so the answer cannot be read directly
-  from it. The top-ranked hypothesis above is the analyst's best attribution derived from the full
-  evidence base — treat it as your PRIMARY attribution candidate and adopt it, unless the retrieved
-  reference reports contain clear, specific evidence pointing to a different named actor (e.g. an actor
-  uniquely matching the described malware/tools/TTPs). Do NOT invent a new actor name that appears in
-  neither the hypotheses nor the retrieved reports. If the top hypothesis is "Unknown", make your best
-  judgment from the evidence.
+  from it. Derive your attribution primarily from the retrieved reference reports and the TTPs described
+  in the threat report. The top-ranked hypothesis is the analyst's leading attribution candidate —
+  adopt it unless the retrieved reference reports contain clear, specific evidence pointing to a
+  different named actor (e.g. an actor uniquely matching the described malware/tools/TTPs). Do NOT
+  invent a new actor name that appears in neither the hypotheses nor the retrieved reports. If the top
+  hypothesis is "Unknown", make your best judgment from the evidence.
 
-  Use the most commonly recognized name (e.g. Lazarus Group, Turla, OilRig, Kimsuky, Gamaredon, Cozy Bear,
-  Fancy Bear, Stately Taurus, Sharp Panda, SideCopy, MuddyWater).
+  Known threat actor groups (shared candidate list, with aliases):
+  {candidate_groups}
+
+  Use the most commonly recognized alias of the attributed group.
   Output ONLY the threat actor name in the format: <answer>Threat Actor Name</answer>
   Do NOT include any explanation or additional text outside the <answer> tags.

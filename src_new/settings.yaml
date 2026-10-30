@@ -1,8 +1,6 @@
 # =============================================================================
-# new_src 独立配置 —— 冲突感知多智能体 CTI 分析方法（新版方案落地）
-# 与旧 src/ 隔离；本文件承载全局共享参数（保障评估公平）+ 本方法专属阈值/权重。
-# 标注 # TODO 的字段为部署/环境相关，需按实际填写；其余为方法默认值占位，
-# 最终值由消融（A2/A3/C3 等）在验证集标定后随评估一并报告。
+# src_new 独立配置 —— 冲突感知多智能体 CTI 分析方法
+# 全局共享参数（主方法与基线共用）+ 本方法专属阈值/权重。
 # =============================================================================
 
 # ---------- 模型与基础设施 ----------
@@ -13,11 +11,10 @@ models:
     model_name: "GLM-4-9B"                 # vLLM 实际暴露的模型 id
     max_single_time: 200
     max_tokens: 2048
-    max_context_tokens: 8192
+    max_context_tokens: 32768              # 对齐 vLLM max-model-len（四骨干公共上限）
     default_retries: 3
-    seed: 42                             # 请求级采样 seed（P0 统一：temperature>0 调用可复现）
-    repetition_penalty: 1.1            # 重复惩罚(>1 抑制 token 重复)：缓解 ATE 的 T-ID 退化(重复/枚举)；对所有方法统一生效
-    enable_thinking: false             # Qwen3 思考开关：false 关(复杂请求 ~15s→7s)，true 开(归因推理更充分)
+    seed: 42                               # 请求级采样 seed（temperature>0 调用可复现）
+    repetition_penalty: 1.1                # 重复惩罚（>1 抑制 token 重复）
   embedding_model:
     path: "/opt/share/models/BAAI/bge-m3"  # 本地 BGE-M3
     dimension: 512
@@ -79,7 +76,7 @@ pipeline:
 
   # —— 分析报告（④）：固定双通道 token 预算（方案 8.2，回锚量不随冲突自适应） ——
   reporter:
-    max_context_tokens: 8192          # 全局 token 上限（缺省取 models.chat_model.max_context_tokens）
+    max_context_tokens: 32768         # 全局 token 上限（缺省取 models.chat_model.max_context_tokens）
     char_per_token: 3                 # 字符/token 估算：budget_chars = max_input_tokens×3 − 报告 − 模板
     template_overhead_chars: 1500     # prompt 模板固定开销（字符）
     report_max_chars: 6000            # 通道 1 原始报告截断字符上限（不主动摘要）
@@ -107,9 +104,8 @@ pipeline:
 
   # —— 创新点 4（v3）：欺骗感知的可信度审查（结构定罪 + 语义豁免；默认关闭=会议版逐字节等价） ——
   deception:
-    enable: false                        # 会议版等价开关（默认关；期刊版实验开启）
+    enable: false                        # 可信度审查开关（默认关）
     dup_cos_threshold: 0.85              # τ_dup：CORE-1 跨来源近重复判定（content 嵌入余弦）
-    dup_cos_high: 0.90                   # τ_high：结构强证据区——⑤ 非 credible 即隔离
     core2_enable: false                  # CORE-2 归因-内容分歧（已证伪，默认关，详见方案 §9 复盘）
     core2_div_threshold: 0.60            # τ_div（C1）：与同归因跨源盟友质心的分歧阈值
     core2_actor_threshold: 0.45          # τ_actor（C2）：与组织史质心 μ_A 的分歧阈值

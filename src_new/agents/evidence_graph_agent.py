@@ -1,5 +1,5 @@
 """
-② 证据建图智能体 Evidence & Graph Agent（创新点 2 表征的推理部分，方案 4.4）
+② 证据建图智能体 Evidence & Graph Agent
 
 职责：把一份分析请求变成一张带符号证据图。
 - mode=full：原始 query 检索 top_k；ABP 规范键抽取（含查询画像）；调度 core 做预标注 +
@@ -31,6 +31,13 @@ _HIGH_RELIABILITY_SOURCES = {
 }
 
 
+def _make_doc_id(r: dict) -> str:
+    """chunk 级唯一 doc_id：source_file#section_title（同一报告不同 section 不共享）。"""
+    src = r.get("source_file", "") or r.get("report_title", "")
+    sec = r.get("section_title", "") or "full"
+    return f"{src}#{sec}"
+
+
 class EvidenceGraphAgent(BaseAgent):
     name = "evidence_graph_agent"
 
@@ -54,7 +61,7 @@ class EvidenceGraphAgent(BaseAgent):
 
         for r in results:
             ev = Evidence(
-                doc_id=r.get("source_file", "") or r.get("report_title", ""),
+                doc_id=_make_doc_id(r),
                 source=r.get("report_title", ""),
                 content=r.get("content", ""),
                 section_title=r.get("section_title", ""),
@@ -66,9 +73,8 @@ class EvidenceGraphAgent(BaseAgent):
 
         awm.initial_doc_ids = [e.doc_id for e in awm.evidence_set]
 
-        # 正文内容嵌入（创新点 4 CORE-1 用：近重复检测的嵌入源。ABP 描述嵌入受
-        # 抽取 LLM 风格影响大——同一攻击语料在不同骨干下 cos 0.95→0.72；content
-        # 嵌入只依赖文本本身，骨干无关）
+        # 正文内容嵌入（CORE-1 近重复检测用：content 嵌入只依赖文本本身，
+        # 不受抽取 LLM 风格影响）
         try:
             from src_new.utils.embedding import get_embed_model, get_target_dimension
             embs = get_embed_model().embed_documents(
@@ -103,15 +109,14 @@ class EvidenceGraphAgent(BaseAgent):
 
         results = retrieve(counterexample_query, top_k=top_k_expand)
         excluded = set(excluded_doc_ids or [])
-        new_results = [r for r in results
-                       if (r.get("source_file", "") or r.get("report_title", "")) not in excluded]
+        new_results = [r for r in results if _make_doc_id(r) not in excluded]
         self.log(awm, "expand_retrieve",
                  f"{len(results)} raw → {len(new_results)} after excluding initial")
 
         new_evidence = []
         for r in new_results:
             ev = Evidence(
-                doc_id=r.get("source_file", "") or r.get("report_title", ""),
+                doc_id=_make_doc_id(r),
                 source=r.get("report_title", ""),
                 content=r.get("content", ""),
                 section_title=r.get("section_title", ""),
@@ -158,11 +163,8 @@ class EvidenceGraphAgent(BaseAgent):
 
 
 def _assess_source(source_title: str, content: str) -> dict:
-    """启发式来源评估：正则日期 + 厂商白名单（零 LLM）。
-
-    创新点 4（更新方案 §5.1）：本函数产出降格为**先验**可靠性——只回答"谁发布的"，
-    不回答"这篇内容与全图交叉印证结构是否自洽"。后验由可信度审查传递
-    （FLAG→ADJUDGE→REWEIGH，core/deception.py）在带符号图上联合估计；逻辑本身不变。"""
+    """先验来源评估：正则日期 + 厂商白名单（零 LLM）。只回答"谁发布的"；
+    后验可信度由 core/deception.py 的可信度审查在图上联合估计。"""
     date_match = re.search(
         r'((?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}|\d{4}[-/]\d{1,2}[-/]\d{1,2})',
         content[:3000], re.IGNORECASE)

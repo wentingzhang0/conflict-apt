@@ -1,5 +1,5 @@
 """
-③ 假设推理智能体 Hypothesis Agent（创新点 2 假设生成 + 创新点 3 精化，方案 4.5）
+③ 假设推理智能体 Hypothesis Agent
 
 两个 phase（由 Controller 调度）：
 - generate_evaluate：簇内画像聚合 → 并行假设生成 → 多次采样 LLM 多维评估（取中位 llm_score）
@@ -12,9 +12,11 @@
 智能体间不直接通信；所有协作经 Controller 与 AWM。
 """
 import re
+import statistics
 
 from src_new.agents.base import BaseAgent
 from src_new.core.awm import AWM, Hypothesis, CONFLICT_DIMENSIONS
+from src_new.core.apt_groups import candidate_groups_text
 from src_new.utils.llm_client import chat, parallel_chat
 from src_new.utils.settings import get_task_prompt, get_pipeline_param, get_global, get_prompt
 
@@ -50,6 +52,7 @@ def _format_gen_prompt(prompts, awm, **extra):
         task_instruction=awm.task_instruction,
         answer_format=awm.answer_format,
         platform=_extract_platform(awm),
+        candidate_groups=candidate_groups_text(),
     )
     return prompts["user"].format(**kwargs)
 
@@ -118,7 +121,7 @@ class HypothesisAgent(BaseAgent):
     def _evaluate(self, awm: AWM):
         prompts = get_task_prompt("hypothesis_eval", awm.task_type)
         samples = get_pipeline_param("evaluation.eval_samples", 3)
-        # 全部 假设×采样 一次性并行（原为外层假设串行、仅假设内采样并行）
+        # 全部 假设×采样 一次性并行
         flat_tasks, owner = [], []
         for hi, h in enumerate(awm.hypothesis_space):
             for _ in range(samples):
@@ -139,7 +142,7 @@ class HypothesisAgent(BaseAgent):
                 buckets.setdefault(hi, []).append(s)
         for hi, h in enumerate(awm.hypothesis_space):
             overalls = buckets.get(hi, [])
-            h.llm_score = float(sum(overalls) / len(overalls)) if overalls else 0.5
+            h.llm_score = float(statistics.median(overalls)) if overalls else 0.5
 
     @staticmethod
     def _parse_eval_score(response: str):
@@ -178,7 +181,7 @@ class HypothesisAgent(BaseAgent):
         self.log(awm, "refute_start", f"h1={h1.answer} |S(h1)|={len(s_h1)}")
 
         prompts = get_prompt("refutation_query")
-        # 对 S(h1) 的全部支撑证据一次性并行生成反例查询（原为串行 chat）
+        # 对 S(h1) 的全部支撑证据一次性并行生成反例查询
         prepared = []
         for ev_id, _w in s_h1:
             ev = awm.get_evidence_by_doc_id(ev_id)

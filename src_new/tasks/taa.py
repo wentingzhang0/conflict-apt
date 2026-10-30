@@ -18,7 +18,7 @@ class TAATask(TaskAdapter):
         "Identify the threat actor (APT group) responsible for the described cyber attack. "
         "Base your analysis on the collected evidence and behavior profiles."
     )
-    answer_format = "threat actor name (use the most commonly recognized name, e.g. Lazarus Group, Turla, OilRig, Kimsuky)"
+    answer_format = "threat actor group name (most commonly recognized alias)"
 
     def format_query(self, report_text: str, **kwargs) -> str:
         return report_text

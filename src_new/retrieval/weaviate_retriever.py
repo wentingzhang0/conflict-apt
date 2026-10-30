@@ -29,6 +29,20 @@ _RETRIEVAL_MODE = get_global("retrieval_mode", "hybrid")
 _HYBRID_ALPHA = get_global("hybrid_alpha", 0.4)
 
 
+def collection_counts() -> dict:
+    """各 Weaviate class 的文档数（运行前后记录库状态用）"""
+    out = {}
+    try:
+        for c in _client.schema.get().get("classes", []):
+            name = c["class"]
+            agg = _client.query.aggregate(name).with_meta_count().do()
+            out[name] = (agg.get("data", {}).get("Aggregate", {})
+                         .get(name, [{}])[0].get("meta", {}).get("count"))
+    except Exception:
+        pass
+    return out
+
+
 # ── 本地 BM25 索引（懒加载，从 Weaviate 拉全部文档）────────────────────
 class BM25Index:
     """简易 BM25，从 Weaviate 加载全部文档，首次查询时构建"""
@@ -44,28 +58,35 @@ class BM25Index:
         self._built = False
 
     def build(self):
-        """从 Weaviate 拉全部文档并建索引"""
+        """从 Weaviate 拉全部文档并建索引（cursor 分页，不受单次查询上限约束）"""
         if self._built:
             return
 
         old_stdout = sys.stdout
         sys.stdout = io.StringIO()
+        docs, cursor, page = [], None, 2000
         try:
-            # 分批拉取（Weaviate 默认限制 10000，我们文档不多一次拉完）
-            response = (
-                _client.query
-                .get(_class_name, ["content", "report_title", "section_title", "source_file"])
-                .with_limit(10000)
-                .do()
-            )
+            while True:
+                q = (
+                    _client.query
+                    .get(_class_name, ["content", "report_title", "section_title", "source_file"])
+                    .with_limit(page)
+                    .with_additional(["id"])
+                )
+                if cursor is not None:
+                    q = q.with_after(cursor)
+                response = q.do()
+                if 'errors' in response:
+                    break
+                batch = response['data']['Get'].get(_class_name, [])
+                docs.extend(batch)
+                if len(batch) < page:
+                    break
+                cursor = batch[-1]["_additional"]["id"]
         finally:
             sys.stdout = old_stdout
 
-        if 'errors' in response:
-            self._built = True
-            return
-
-        self.docs = response['data']['Get'].get(_class_name, [])
+        self.docs = docs
         self.N = len(self.docs)
 
         # 分词 + 统计 df

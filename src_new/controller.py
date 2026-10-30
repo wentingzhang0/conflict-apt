@@ -1,5 +1,5 @@
 """
-① 确定性编排器 Controller（创新点 1 控制 + 创新点 3 迭代，方案 4.3、5.2）
+① 确定性编排器 Controller
 
 非 LLM。所有数值（C/Φ/k/h_graph/clusters/门控）一律调 metrics.py；分支决策基于
 图结构信号，同输入同路径。3 个 LLM 智能体经 Controller 中转，互不直连。
@@ -12,6 +12,7 @@
 """
 from src_new.core.awm import AWM, Evidence, GraphEdge
 from src_new.core import conflict, transitivity, deception
+from src_new.core.signed_graph import QUERY_NODE
 from src_new.core.abp import compute_abp_embedding
 from src_new.core.canonical_match import _aliases
 from src_new import metrics
@@ -58,11 +59,7 @@ class Controller:
             awm.log("controller", "fallback_no_evidence")
             return awm
 
-        # Phase 1.5: 可信度审查传递（创新点 4 v2）——在 PATH 门控之前执行。
-        # v1 把审查放在"仅有冲突"分支，但真实假旗注入常呈全 support 共识图（归因别名
-        # 与查询锚点相交、时间线重叠），Φ≈0、k=1，审查根本不会触发。v2 的 CORE-1
-        # 检测内容层指纹（跨来源近重复），不依赖冲突结构，故对全体证据执行；
-        # enable=false 时零行为变化（会议版逐字节等价）。
+        # Phase 1.5: 可信度审查（CORE → ADJUDGE → QUARANTINE），在门控之前对全体证据执行
         self._credibility_pass(awm)
 
         # Phase 2: 门控（PATH/DEPTH 单轴推理强度，确定性；原 ROUTING 已删除，Φ 唯一控制信号）
@@ -104,16 +101,14 @@ class Controller:
         awm.log("controller", "phase3_done", f"report t={_t.time()-_phase_t0:.1f}s")
         return awm
 
-    # ============== 可信度审查传递（创新点 4 v2：CORE→ADJUDGE→QUARANTINE） ==============
+    # ============== 可信度审查（CORE→ADJUDGE→QUARANTINE） ==============
     def _credibility_pass(self, awm: AWM):
-        """CORE-1 近重复互证检测（确定性）→ ⑤ 归因-行为一致性裁决 →
-        QUARANTINE 隔离（deceptive 退出证据组装）+ 降权（suspicious/deceptive）。
+        """CORE-1 近重复互证检测（确定性）→ ⑤ 语义裁决 → QUARANTINE 隔离 + 降权。
 
-        纪律：
-        - deception.enable=false（默认）→ 直接返回，流水线与会议版逐字节等价；
-        - 单次执行不迭代；反驳阶段不触发二次审查；
-        - Φ/PATH/DEPTH 不动（隔离不改拓扑，仅影响下游 prompt 组装）；
-        - 隔离是重处置，只有 ⑤ 显式判 deceptive 才触发；CORE-1 标记本身不定罪。
+        - deception.enable=false（默认）时直接返回；
+        - 单次执行，反驳阶段不触发二次审查；
+        - Φ/PATH/DEPTH 不动（隔离不改图拓扑，仅影响下游 prompt 组装）；
+        - 隔离以确定性标记为前提，CORE-1 标记本身不定罪。
         """
         if not get_pipeline_param("deception.enable", False):
             return
@@ -123,25 +118,30 @@ class Controller:
                                 "discounted_edges": 0}
         # CORE-1：跨来源近重复互证（确定性，零 LLM）
         pairs = deception.detect_collusion_pairs(awm)
-        # CORE-2：归因-内容分歧（v3，确定性，零 LLM）——不依赖冲突结构也不依赖
-        # 近重复对：单篇注入（C2 组织史分歧）与风格分化的自适应攻击
-        # （C3 共发带 + C2）的核心检测面
+        # CORE-2：归因-内容分歧（确定性，零 LLM，默认关闭）
         core2 = deception.detect_attribution_divergence(awm)
         awm.credibility_pass["core2_flags"] = core2
-        # 消融 D2（deception.flag_all）：标记移除——全部证据送 ⑤ 裁决（预算截断）
+        # 消融 D2（deception.flag_all）：移除结构标记——全部证据按检索序送 ⑤ 裁决，
+        # 非 credible 按裁决隔离
         if get_pipeline_param("deception.flag_all", False):
             pairs = []
             core2 = []
-            flagged = sorted(e.doc_id for e in awm.evidence_set)[:6]
-            awm.credibility_pass["flagged"] = flagged
+            ordered = [e.doc_id for e in awm.evidence_set
+                       if e.doc_id != QUERY_NODE]
+            max_m = int(get_pipeline_param("deception.max_adjudications", 3))
+            targets = ordered[:max_m * 2] if max_m else ordered
+            awm.credibility_pass["flagged"] = ordered
             awm.log("controller", "credibility_d2_flag_all",
-                    f"flagging all evidence (n={len(flagged)})")
+                    f"flagging all evidence (n={len(ordered)}, adjudicating {len(targets)})")
             packages = [deception.build_evidence_package(awm, d, None)
-                        for d in flagged]
+                        for d in targets]
             verdicts = self.cred.adjudicate_batch(awm, packages)
             awm.credibility_pass["adjudications"] = verdicts
-            # D2 下 quarantine_set 依赖 CORE-1 标记 → 全放行（这正是要暴露的缺陷：
-            # 无结构证据时语义裁决单独不足以定罪隔离）
+            quarantined = sorted({v["doc_id"] for v in verdicts
+                                  if v.get("verdict") != "credible"})
+            if not get_pipeline_param("deception.no_quarantine", False):
+                awm.quarantined_doc_ids = quarantined
+                awm.credibility_pass["quarantined"] = quarantined
             result = deception.reweigh(awm, verdicts)
             awm.credibility_pass["reliability_updates"] = result["reliability_updates"]
             return

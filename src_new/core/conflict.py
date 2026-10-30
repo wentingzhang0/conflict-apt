@@ -1,13 +1,13 @@
 """
-确定性冲突判定与符号聚合（创新点 2，3.2.2–3.2.3）
+确定性冲突判定与符号聚合（创新点 2）
 
 流水线：启发式预标注 → 逐维规范键匹配（canonical_match，零 LLM，两档）→ 符号聚合
-（三态边：任意 conflict→−1、无 conflict 且任意 support→+1、全 none→neutral 不建边）
-→ 画像/可靠性边权推导 → 查询锚点 q↔证据按同机制建边。
+（三态边，保守化规则见 _aggregate：归因冲突∧行为支持，或时间冲突∧归因支持 → −1；
+无冲突且任意维支持 → +1；全 none → 不建边）→ 画像/可靠性边权推导 →
+查询锚点 q↔证据按同机制建边。
 
 输出 awm.signed_graph_edges：confirmed 边（sign=±1，含冲突维度、边权等；含 q↔证据边）。
 全 none 的配对此处不建边，留待 core/transitivity.py 传递性补全。
-无 uncertain/灰区档（方案 3.2.1 两档、3.2.3 三态边）。
 """
 from itertools import combinations
 import numpy as np

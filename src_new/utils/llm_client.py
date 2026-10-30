@@ -1,13 +1,10 @@
 """
 LLM 调用封装 —— 通过 vLLM 的 OpenAI 兼容端点调用本地大模型。
 
-重要：当前 vLLM 加载的是 Qwen3-30B-A3B-**Base**（预训练基座，非 Instruct）。
-基座模型的 tokenizer 不带 chat_template，/v1/chat/completions 无法为其正确套用
-对话格式，模型会把输入当成无结构纯文本续写 —— 回显 "Assistant:/User:" 角色标记、
-答完后继续编造下一轮对话、甚至跑偏复述训练数据里的指令模板。
-因此 chat() 改走 /v1/completions 并手工拼接 Qwen 系列通用的 ChatML
-（<|im_start|>system/user/assistant<|im_end|>），显式构造对话结构后，基座模型才能
-稳定作答（Qwen 预训练阶段即以 ChatML 做 packing，故对 2.5/3 的 Base 与 Instruct 均兼容）。
+vLLM 加载的骨干可能是 Qwen3 Base（预训练基座）：tokenizer 不带 chat_template，
+/v1/chat/completions 会被当作无结构文本续写（回显角色标记、编造后续对话）。
+因此 chat() 走 /v1/completions 并手工拼接 ChatML（Qwen 系列预训练即以 ChatML
+packing，Base 与 Instruct 均兼容）。
 """
 import json
 import os as _os
@@ -27,22 +24,17 @@ _client = OpenAI(
 )
 
 import os as _os
-MODEL_NAME = _os.environ.get('LLM_MODEL_NAME') or _chat_config['model_name']  # 并行链环境覆盖
+MODEL_NAME = _os.environ.get('LLM_MODEL_NAME') or _chat_config['model_name']  # 环境变量覆盖
 DEFAULT_MAX_TOKENS = _chat_config.get('max_tokens', 2048)
 DEFAULT_RETRIES = _chat_config.get('default_retries', 3)
-# 固定采样 seed（vLLM 请求级）：temperature>0 的调用（假设评估 0.2 等）可复现；
-# None = 不传（旧行为）。P0 统一实验（回复学长 §3）：全表以 seed=42 重跑为准。
+# 请求级采样 seed：temperature>0 的调用可复现；None = 不传
 _REQUEST_SEED = _chat_config.get('seed', None)
-# 注：原 enable_thinking / chat_template_kwargs 仅对 /v1/chat/completions 有意义；
-# 当前改用 /v1/completions + 手工 ChatML（见 _format_chatml），基座模型无思考机制，不再读取该开关。
-# 重复惩罚（>1 抑制已出现 token 的重复概率，缓解 ATE 等任务的自回归退化：
-# 如 T-ID 重复 T1055×65、顺序枚举 T1060→T1127）。对所有方法统一生效（控制变量）。
+# 重复惩罚（>1 抑制已出现 token 的重复概率）
 DEFAULT_REPETITION_PENALTY = _chat_config.get('repetition_penalty', 1.1)
 
-# 模型实际上下文窗口长度（从模型配置读取，fallback 8192）
-_MODEL_MAX_CONTEXT = _chat_config.get('max_context_tokens', 8192)
-
-# 保守估计：网络安全文本混合技术术语，实际约 1.7 chars/token，取 1.5 留安全余量
+# 模型上下文窗口（token）；输入超出时从中间截断（保留头尾）
+_MODEL_MAX_CONTEXT = _chat_config.get('max_context_tokens', 32768)
+# 字符/token 估算（截断保护用；正常输入远低于上限，不触发）
 _CHARS_PER_TOKEN = 1.5
 
 
@@ -75,11 +67,7 @@ def _safe_max_tokens(prompt: str, system: str, max_tokens: int) -> tuple[int, st
 
 
 # ---- ChatML 对话格式（手工拼接） ----
-# 基座模型 tokenizer 无 chat_template，必须显式构造 ChatML 结构，
-# 否则 vLLM 把 messages 当纯文本拼接，模型会失控续写。
-# 思考模式适配（按模型族）：
-# - Qwen3 系列：默认开思考，预填一对空 <think></think> 关闭；
-# - GLM-4 系列：chat 格式天然带 <think> 段且预填会导致空输出——不预填。
+# Qwen3 默认开思考模式：预填一对空 <think></think> 关闭；其他系列不预填。
 def _wants_think_prefill() -> bool:
     return "qwen3" in str(MODEL_NAME).lower()
 
@@ -96,8 +84,7 @@ def _format_chatml(system: str, user: str) -> str:
     return "\n".join(parts)
 
 
-# 生成终止符：assistant 回合结束（<|im_end|>）；或基座模型答完直接续写下一轮
-# （<|im_start|>）时截断，避免它继续编造后续对话。
+# assistant 回合结束，或基座模型开始续写下一轮时截断
 _CHAT_STOP = ["<|im_end|>", "<|im_start|>"]
 
 # ---- LLM I/O 日志 ----
