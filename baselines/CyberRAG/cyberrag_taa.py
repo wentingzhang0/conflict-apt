@@ -27,7 +27,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 from baselines.shared import (
     chat, retrieve, format_context, get_task_config,
 )
-from src.utils.settings import get_global_top_k, get_global
+from src_new.utils.settings import get_global_top_k, get_global
 
 
 # ═══════════════════════════════════════════════════════════════

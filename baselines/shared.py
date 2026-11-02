@@ -11,9 +11,9 @@ import re
 # 确保项目根目录可导入
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from src.utils.llm_client import chat
-from src.retrieval import weaviate_retriever
-from src.utils.settings import get_global_top_k, get_global
+from src_new.utils.llm_client import chat
+from src_new.retrieval import weaviate_retriever
+from src_new.utils.settings import get_global_top_k, get_global
 
 
 # ── TAA 任务 prompt ──────────────────────────────────────────────────

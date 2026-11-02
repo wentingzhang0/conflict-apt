@@ -25,7 +25,7 @@ from multiprocessing import Queue
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-from src.utils.settings import apply_overrides, get_global, get_global_top_k
+from src_new.utils.settings import apply_overrides, get_global, get_global_top_k
 
 # θ₁ 扫描点：0.0 = 全部进入反例（恒最深）；1.01 = 全部不反驳（I 恒 0）≈ no_refute
 # 注意 i_max=1 时 depth_from_phi 只有 0/1 两档：Φ<θ₁→0、Φ≥θ₁→1
@@ -47,7 +47,7 @@ def variant_overrides(theta: float) -> dict:
 
 def _expand_task_overrides(flat: dict) -> dict:
     """与 run_ablation 相同：展开 per-task 覆盖到 settings 单例。"""
-    from src.utils.settings import get_settings
+    from src_new.utils.settings import get_settings
     cfg = get_settings()
     for path, val in flat.items():
         if not path.startswith("adaptive.depth_thresholds."):
@@ -72,9 +72,9 @@ _orig_worker = run_ablation._worker
 
 
 def _rich_worker(report_text, sample_idx, queue: Queue):
-    from src.controller import Controller
-    from src.tasks import TAATask
-    from src.utils import llm_client
+    from src_new.controller import Controller
+    from src_new.tasks import TAATask
+    from src_new.utils import llm_client
 
     llm_client.reset_llm_stats()
     task = TAATask()

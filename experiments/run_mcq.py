@@ -17,7 +17,7 @@ from datasets import load_from_disk
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-from src.utils.settings import get_global_top_k, get_global
+from src_new.utils.settings import get_global_top_k, get_global
 
 
 def _log(msg):
@@ -32,8 +32,8 @@ def load_mcq_dataset(data_path=None):
 
 
 def _worker(question, options_a, options_b, options_c, options_d, sample_idx, queue: Queue):
-    from src.agents.orchestrator import Orchestrator
-    from src.tasks import MCQTask
+    from src_new.agents.orchestrator import Orchestrator
+    from src_new.tasks import MCQTask
 
     task = MCQTask()
     orchestrator = Orchestrator(

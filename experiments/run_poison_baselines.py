@@ -27,7 +27,7 @@ from run_poison import POISON_DIR, SETTINGS, _LOG  # noqa: E402
 
 def install_src_poisoned_retrieval(variant_cap: int = 99):
     """src 模块版投毒检索（基线经 baselines/shared.py → src.retrieval）。"""
-    import src.retrieval.weaviate_retriever as retr
+    import src_new.retrieval.weaviate_retriever as retr
     orig_semantic = retr._semantic_search
     _bm25_add_poison_src(retr, variant_cap)
 
@@ -49,8 +49,8 @@ def _semantic_search_poison_src(query_text, top_k, variant_cap=99):
     import io as _io
     import sys as _sys
     import weaviate as _wv
-    from src.retrieval import weaviate_retriever as retr
-    from src.utils.settings import get_settings
+    from src_new.retrieval import weaviate_retriever as retr
+    from src_new.utils.settings import get_settings
     fields = ["content", "report_title", "section_title", "source_file"]
     qvec = retr.get_embed_model().embed_documents([query_text])[0][:retr.get_target_dimension()]
     client = _wv.Client(url=get_settings()["models"]["weaviate_model"]["url"])
@@ -81,7 +81,7 @@ def _bm25_add_poison_src(retr, variant_cap=99):
     import io as _io
     import sys as _sys
     import weaviate as _wv
-    from src.utils.settings import get_settings
+    from src_new.utils.settings import get_settings
     idx = retr._bm25_index
     idx.build()
     keep = [i for i, d in enumerate(idx.docs)
@@ -229,7 +229,7 @@ def main():
 
 
 def _model_slug():
-    from src.utils.llm_client import MODEL_NAME
+    from src_new.utils.llm_client import MODEL_NAME
     return str(MODEL_NAME).lower().replace("/", "-").replace(" ", "-")
 
 

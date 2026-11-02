@@ -28,7 +28,7 @@ import networkx as nx
 from baselines.shared import (
     chat, retrieve, format_context, get_task_config,
 )
-from src.utils.settings import get_global_top_k, get_global
+from src_new.utils.settings import get_global_top_k, get_global
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -87,7 +87,7 @@ def align_and_merge_claims(
     if len(claims) <= 1:
         return claims
 
-    from src.utils.embedding import get_embed_model, get_target_dimension
+    from src_new.utils.embedding import get_embed_model, get_target_dimension
 
     embed_model = get_embed_model()
     texts = [c["text"] for c in claims]
@@ -160,7 +160,7 @@ def build_evidence_graph(
     max_support_edges: int = 60,
 ) -> nx.DiGraph:
     """Build evidence graph with support/contradiction edges."""
-    from src.utils.embedding import get_embed_model, get_target_dimension
+    from src_new.utils.embedding import get_embed_model, get_target_dimension
 
     embed_model = get_embed_model()
     dim = get_target_dimension()

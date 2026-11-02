@@ -7,8 +7,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 from datasets import load_from_disk
-from src.controller import Controller
-from src.tasks import ATETask
+from src_new.controller import Controller
+from src_new.tasks import ATETask
 from run_ate import evaluate_ate
 
 
@@ -17,7 +17,7 @@ def main():
     if hasattr(ds, 'keys'):
         ds = ds['test']
     try:
-        from src.retrieval.weaviate_retriever import _bm25_index
+        from src_new.retrieval.weaviate_retriever import _bm25_index
         _bm25_index.build()
     except Exception as e:
         print(f"[warn] BM25: {e}")

@@ -17,7 +17,7 @@ from datasets import load_from_disk
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-from src.utils.settings import get_global_top_k, get_global
+from src_new.utils.settings import get_global_top_k, get_global
 
 
 def _log(msg):
@@ -47,8 +47,8 @@ _WORKER_ARGS = {}
 
 
 def _worker_main(description, sample_idx, queue: Queue):
-    from src.agents.orchestrator import Orchestrator
-    from src.tasks import RCMTask
+    from src_new.agents.orchestrator import Orchestrator
+    from src_new.tasks import RCMTask
 
     task = RCMTask()
     orchestrator = Orchestrator(

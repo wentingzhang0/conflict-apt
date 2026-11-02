@@ -25,7 +25,7 @@ from datasets import load_from_disk
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-from src.utils.settings import apply_overrides, get_global, get_global_top_k
+from src_new.utils.settings import apply_overrides, get_global, get_global_top_k
 
 # ── 消融变体 → settings 覆盖项 ─────────────────────────────────────────
 # 覆盖经 apply_overrides 注册，get_pipeline_param 优先读取（见 utils/settings.py）
@@ -65,7 +65,7 @@ def _expand_task_overrides(flat: dict) -> dict:
 
     实现方式：直接改 get_settings() 单例中的对应嵌套值（子进程 fork 前调用，
     worker 继承修改后的配置；不污染磁盘上的 settings.yaml）。"""
-    from src.utils.settings import get_settings
+    from src_new.utils.settings import get_settings
     cfg = get_settings()
     for path, val in flat.items():
         if not path.startswith("adaptive.depth_thresholds."):
@@ -86,9 +86,9 @@ _WORKER_ARGS = {}
 
 
 def _worker(report_text, sample_idx, queue: Queue):
-    from src.controller import Controller
-    from src.tasks import TAATask
-    from src.utils import llm_client
+    from src_new.controller import Controller
+    from src_new.tasks import TAATask
+    from src_new.utils import llm_client
 
     llm_client.reset_llm_stats()  # 每样本清零调用统计
 
@@ -168,7 +168,7 @@ def run_variant(variant: str, args):
 
     # BM25 预热（同 run_taa）
     try:
-        from src.retrieval.weaviate_retriever import _bm25_index
+        from src_new.retrieval.weaviate_retriever import _bm25_index
         _bm25_index.build()
         _log(f"BM25 index ready ({_bm25_index.N} docs)")
     except Exception as e:

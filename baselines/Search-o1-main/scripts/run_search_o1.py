@@ -13,9 +13,9 @@ import argparse
 project_root = Path(__file__).parent.parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.utils.config import load_config
-from src.models.llm_model_service import ChatModel
-from src.Agent.tools.semantic_tool import SemanticSearchTool
+from src_new.utils.config import load_config
+from src_new.models.llm_model_service import ChatModel
+from src_new.Agent.tools.semantic_tool import SemanticSearchTool
 
 # Import prompt functions from the same directory
 scripts_dir = Path(__file__).parent

@@ -159,7 +159,7 @@ class ArbGraphMCQ:
             retrieve, format_context, chat, parse_mcq_prediction,
             MCQ_SYSTEM_PROMPT,
         )
-        from src.utils.settings import get_global
+        from src_new.utils.settings import get_global
 
         docs = retrieve(query_text, top_k=self.top_k)
         if not docs:
@@ -313,7 +313,7 @@ class SearchO1MCQ:
 class RAGIntelMCQ:
     def __init__(self, **kwargs):
         from baselines.RAGIntel.rag_intel_taa import RAGIntel
-        from src.utils.settings import get_pipeline_param
+        from src_new.utils.settings import get_pipeline_param
         top_n = get_pipeline_param("rag_intel.top_n", 20)
         self.model = RAGIntel(top_k=kwargs.get("top_k", 10), top_n=top_n)
 
@@ -406,7 +406,7 @@ def main():
     parser.add_argument("--output", default="experiments/results/{method}_mcq_results.json")
     parser.add_argument("--start", type=int, default=0)
     parser.add_argument("--end", type=int, default=2500)
-    from src.utils.settings import get_global_top_k, get_global
+    from src_new.utils.settings import get_global_top_k, get_global
     parser.add_argument("--top-k", type=int, default=get_global_top_k())
     parser.add_argument("--iterations", type=int, default=3)
     parser.add_argument("--max-searches", type=int, default=3)

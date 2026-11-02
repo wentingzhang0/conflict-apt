@@ -24,7 +24,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 sys.path.insert(0, os.path.dirname(__file__))
 from run_taa import GROUND_TRUTH, _log
 from evaluate_taa import compute_taa_accuracy
-from src.utils.settings import get_global_top_k, get_pipeline_param, get_global
+from src_new.utils.settings import get_global_top_k, get_pipeline_param, get_global
 
 # ── Baseline 注册表 ──────────────────────────────────────────────────
 _METHODS = {}

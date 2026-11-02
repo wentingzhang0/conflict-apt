@@ -21,7 +21,7 @@ from datasets import load_from_disk
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-from src.utils.settings import get_global_top_k, get_global
+from src_new.utils.settings import get_global_top_k, get_global
 
 
 def _log(msg):
@@ -51,7 +51,7 @@ def parse_tids(text: str) -> set:
 def _truncate_pred_by_platform(prediction: str, platform: str) -> str:
     """按平台硬截断 T-ID 列表，与 src/tasks/ate.py:parse_output 对称（控制变量：
     baseline 与主方法走完全相同的截断——同一 _extract_tids + 同一平台上限）。"""
-    from src.tasks.ate import _extract_tids, _MAX_TIDS_ENTERPRISE, _MAX_TIDS_MOBILE
+    from src_new.tasks.ate import _extract_tids, _MAX_TIDS_ENTERPRISE, _MAX_TIDS_MOBILE
     tids = _extract_tids(prediction)  # 有序 / 去重 / 去子技术 / upper
     limit = _MAX_TIDS_MOBILE if (platform or "").lower() == "mobile" else _MAX_TIDS_ENTERPRISE
     return ", ".join(tids[:limit])
@@ -84,8 +84,8 @@ _WORKER_ARGS = {}
 
 
 def _worker_main(description, sample_idx, queue: Queue):
-    from src.agents.orchestrator import Orchestrator
-    from src.tasks import ATETask
+    from src_new.agents.orchestrator import Orchestrator
+    from src_new.tasks import ATETask
 
     task = ATETask()
     # 不传入 Prompt 字段的完整技术列表（~202个T-ID），

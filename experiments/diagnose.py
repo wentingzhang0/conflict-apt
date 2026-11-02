@@ -24,13 +24,13 @@ def _log(fh, msg):
 
 
 def diagnose_taa(n, fh):
-    from src.controller import Controller
-    from src.tasks import TAATask
+    from src_new.controller import Controller
+    from src_new.tasks import TAATask
     from run_taa import GROUND_TRUTH, load_taa_dataset
 
     # 预热 BM25
     try:
-        from src.retrieval.weaviate_retriever import _bm25_index
+        from src_new.retrieval.weaviate_retriever import _bm25_index
         _bm25_index.build()
     except Exception as e:
         _log(fh, f"[warn] BM25 warm-up skipped: {e}")
@@ -54,12 +54,12 @@ def diagnose_taa(n, fh):
 
 
 def diagnose_ate(n, fh):
-    from src.controller import Controller
-    from src.tasks import ATETask
+    from src_new.controller import Controller
+    from src_new.tasks import ATETask
     from run_ate import load_ate_dataset
 
     try:
-        from src.retrieval.weaviate_retriever import _bm25_index
+        from src_new.retrieval.weaviate_retriever import _bm25_index
         _bm25_index.build()
     except Exception as e:
         _log(fh, f"[warn] BM25 warm-up skipped: {e}")

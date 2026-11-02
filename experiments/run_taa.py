@@ -20,7 +20,7 @@ from datasets import load_from_disk
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-from src.utils.settings import get_global_top_k, get_global
+from src_new.utils.settings import get_global_top_k, get_global
 
 
 def _log(msg):
@@ -93,8 +93,8 @@ def load_taa_dataset(data_path: str = None):
 # ── 子进程 worker：真正跑 pipeline ──────────────────────────────────
 def _worker(report_text, sample_idx, queue: Queue):
     """在子进程中运行 pipeline，结果通过 queue 返回"""
-    from src.controller import Controller
-    from src.tasks import TAATask
+    from src_new.controller import Controller
+    from src_new.tasks import TAATask
 
     task = TAATask()
     # Controller 只接收 task + top_k；其余（clusters/iterations/eval_samples）
@@ -217,7 +217,7 @@ def run_experiment(args):
     # 一次性预热 BM25 检索索引：fork 后所有 worker 子进程继承已构建的索引，
     # 避免每条样本都重复从 Weaviate 拉全量文档冷启动（~22s/次）。
     try:
-        from src.retrieval.weaviate_retriever import _bm25_index
+        from src_new.retrieval.weaviate_retriever import _bm25_index
         _log("Pre-warming BM25 index (one-time) ...")
         _bm25_index.build()  # 仅建 BM25(CPU+HTTP)，不触发 embedding/CUDA，避免破坏 fork
         _log(f"BM25 index ready ({_bm25_index.N} docs); workers reuse it.")
