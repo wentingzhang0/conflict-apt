@@ -23,7 +23,7 @@ deploy () {
   ss -tln | grep -q ":8213 " && { echo "FATAL: 8213 occupied"; exit 1; }
   CUDA_VISIBLE_DEVICES=2 nohup $VLLM -m vllm.entrypoints.openai.api_server \
     --model "$1" --served-model-name "$2" --port 8213 --gpu-memory-utilization 0.90 \
-    --max-model-len 16384 --trust-remote-code > "/tmp/vllm_fin_$2.log" 2>&1 &
+    --max-model-len 32768 --trust-remote-code > "/tmp/vllm_fin_$2.log" 2>&1 &
   local i ok=0
   for i in $(seq 1 180); do
     curl -s --max-time 3 http://localhost:8213/v1/models | grep -q "$2" && { ok=1; echo "[deploy] $2 healthy"; break; }

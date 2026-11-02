@@ -38,7 +38,7 @@ deploy() {  # $1=model_path $2=served_name
   kill_vllm || { echo "FATAL: port $PORT occupied, abort"; return 1; }
   CUDA_VISIBLE_DEVICES=$GPU nohup $VLLM -m vllm.entrypoints.openai.api_server \
     --model "$1" --served-model-name "$2" --port $PORT \
-    --gpu-memory-utilization 0.90 --max-model-len 16384 --trust-remote-code \
+    --gpu-memory-utilization 0.90 --max-model-len 32768 --trust-remote-code \
     > "/tmp/vllm_$2.log" 2>&1 &
   echo "[deploy] $2 launching ..."
   local i

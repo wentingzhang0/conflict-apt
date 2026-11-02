@@ -20,7 +20,7 @@ sleep 30
 pkill -u zwt -f "vllm.entrypoints.openai.api_server" 2>/dev/null; sleep 8
 CUDA_VISIBLE_DEVICES=2 nohup $VLLM -m vllm.entrypoints.openai.api_server \
   --model /mnt/nas_share/qwen3/glm-4-9b-chat --served-model-name GLM-4-9B \
-  --port 8213 --gpu-memory-utilization 0.90 --max-model-len 16384 \
+  --port 8213 --gpu-memory-utilization 0.90 --max-model-len 32768 \
   --trust-remote-code > /tmp/vllm_fu.log 2>&1 &
 ok=0
 for i in $(seq 1 90); do

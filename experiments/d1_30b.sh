@@ -10,7 +10,7 @@ sleep 8
 ss -tln | grep -q ":8213 " && { echo "FATAL: 8213 occupied"; exit 1; }
 CUDA_VISIBLE_DEVICES=2 nohup $VLLM -m vllm.entrypoints.openai.api_server \
   --model /mnt/nas_share/qwen3/Qwen3-30B-A3B-Base --served-model-name Qwen3-30B-A3B-Base \
-  --port 8213 --gpu-memory-utilization 0.90 --max-model-len 16384 \
+  --port 8213 --gpu-memory-utilization 0.90 --max-model-len 32768 \
   --trust-remote-code > /tmp/vllm_30b_d1.log 2>&1 &
 echo "[deploy] Qwen3-30B-A3B-Base launching ..."
 ok=0

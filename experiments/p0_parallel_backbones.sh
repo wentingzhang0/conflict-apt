@@ -13,7 +13,7 @@ deployB () {  # path served_name
   pkill -f "port $PORT" 2>/dev/null; sleep 5
   CUDA_VISIBLE_DEVICES=3 nohup $VLLM -m vllm.entrypoints.openai.api_server \
     --model "$1" --served-model-name "$2" --port $PORT \
-    --gpu-memory-utilization 0.90 --max-model-len 16384 --trust-remote-code \
+    --gpu-memory-utilization 0.90 --max-model-len 32768 --trust-remote-code \
     > "/tmp/vllmB_$2.log" 2>&1 &
   local i ok=0
   for i in $(seq 1 180); do
