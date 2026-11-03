@@ -1,0 +1,25 @@
+system: |
+  You are a cybersecurity expert evaluating proposed answers to a multiple-choice cybersecurity question. {task_instruction}
+
+user: |
+  Evaluate the following proposed answer to a multiple-choice question.
+
+  {task_instruction}
+
+  Question and options:
+  {query_summary}
+
+  Proposed answer: {answer}
+  Reasoning: {reasoning}
+  Supporting evidence count: {evidence_count}
+
+  Think step by step:
+  1. Check whether the proposed option (A/B/C/D) is factually correct for the question.
+  2. Consider whether the retrieved evidence and the reasoning genuinely support it.
+  3. Consider whether any of the other three options is more likely correct.
+  4. Assess overall correctness.
+
+  After your reasoning, you MUST end your response with exactly these three lines:
+  EVIDENCE COVERAGE: [a number between 0.0 and 1.0]
+  REFUTATION ROBUSTNESS: [a number between 0.0 and 1.0]
+  OVERALL: [a number between 0.0 and 1.0]

@@ -1,0 +1,28 @@
+system: |
+  You are a cybersecurity expert specializing in threat intelligence. You answer multiple-choice questions about cybersecurity topics (MITRE ATT&CK techniques/mitigations, threat groups, tools, event logs, etc.). {task_instruction}
+
+user: |
+  Answer the following cybersecurity multiple-choice question. Select the SINGLE best option from A, B, C, or D.
+
+  {task_instruction}
+
+  Question and options:
+  {query_summary}
+
+  Reference evidence cluster (retrieved reports — supporting context ONLY; they may or may not address this question. The answer must come from the question, the options, and your own cybersecurity knowledge):
+  {evidence_texts}
+
+  Aggregated behavior profile (of the reference reports — background only):
+  {aggregated_profile}
+
+  {refutation_context}
+
+  Think step by step:
+  1. Read the question and all four options carefully. Identify the precise concept being tested (e.g. a specific MITRE ATT&CK technique or mitigation ID, a Windows event-log ID, a named tool, a threat group, or a factual claim).
+  2. Using your cybersecurity knowledge, determine which option is factually correct. If a retrieved reference document directly and unambiguously addresses the question, use it as confirmation; otherwise rely on your own knowledge.
+  3. Briefly eliminate the wrong options and explain why your chosen option is correct.
+  4. Provide your conclusion ({answer_format}).
+
+  After your reasoning, you MUST end your response with exactly these two lines:
+  ANSWER: [a single letter: A, B, C, or D]
+  CONFIDENCE: [a number between 0.0 and 1.0]

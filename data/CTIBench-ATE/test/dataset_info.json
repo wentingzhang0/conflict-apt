@@ -1,0 +1,54 @@
+{
+  "builder_name": "csv",
+  "citation": "",
+  "config_name": "cti-ate",
+  "dataset_name": "cti-bench",
+  "dataset_size": 462777,
+  "description": "",
+  "download_checksums": {
+    "hf://datasets/AI4Sec/cti-bench@9237e1636ee3e168fbe5ebdcc1c571de0525e568/cti-ate.tsv": {
+      "num_bytes": 461971,
+      "checksum": null
+    }
+  },
+  "download_size": 461971,
+  "features": {
+    "URL": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "Platform": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "Description": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "Prompt": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "GT": {
+      "dtype": "string",
+      "_type": "Value"
+    }
+  },
+  "homepage": "",
+  "license": "",
+  "size_in_bytes": 924748,
+  "splits": {
+    "test": {
+      "name": "test",
+      "num_bytes": 462777,
+      "num_examples": 60,
+      "dataset_name": "cti-bench"
+    }
+  },
+  "version": {
+    "version_str": "0.0.0",
+    "major": 0,
+    "minor": 0,
+    "patch": 0
+  }
+}

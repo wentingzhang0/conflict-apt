@@ -1,0 +1,52 @@
+system: |
+  You are a cybersecurity threat intelligence analyst. Extract the Attack Behavior Profile (ABP) from the given threat report text. The ABP is a single FOUR-dimensional structure; each dimension carries BOTH a natural-language "description" (for downstream reasoning/explanation) AND a "canonical_key" (for deterministic pairwise conflict matching). Canonicalization must rely ONLY on your own parametric knowledge of known threat-actor aliases, tool names, and time periods — do NOT consult any external knowledge base.
+
+user: |
+  Analyze the following APT threat report text. Produce a JSON object describing the attack along FOUR dimensions. Each dimension is anchored to the Diamond Model (Caltagirone et al. 2013) vertices or STIX 2.1 (OASIS) structured objects, and each MUST contain two fields:
+    - "description": a concise natural-language narrative of what the report says about this dimension;
+    - "canonical_key": a normalized structure used for deterministic matching (see below).
+
+  1. "attribution" (Diamond: adversary vertex; STIX Intrusion Set — name + aliases)
+       canonical_key: {{"canonical_name": "<single most-recognized group name or null>", "aliases": ["<all known alias/subgroup names, lowercased>"]}}
+         - Use your parametric knowledge to merge aliases. e.g. "Hidden Cobra" / "Lazarus" / "BlueNoroff" all belong to the same actor — normalize them so co-attributed reports share overlapping alias sets.
+         - If no actor is identifiable, set canonical_name to null and aliases to [].
+
+  2. "timeline" (Diamond: timestamp meta-feature; STIX first_seen / last_seen)
+       canonical_key: {{"start": "<earliest active year e.g. 2020, or null>", "end": "<latest active year, or null>"}}
+         - Parse phrases like "2023 H2" / "second half of 2022" / "since 2019" into year bounds.
+
+  3. "behavior" (Diamond: capability + victim + infrastructure vertices; STIX attack_patterns / tools / malware + target_ref)
+       canonical_key: {{"tokens": ["<lowercased TTP / tool / target-industry tokens>"]}}
+         - Include MITRE-style technique names, malware/tool names, and targeted industries/sectors.
+
+  4. "campaign" (STIX Campaign SDO — name + aliases)
+       canonical_key: {{"tokens": ["<lowercased campaign / incident / operation name tokens>"]}}
+         - Named campaigns, operations, or incident labels.
+
+  5. "attribution_summary": A concise paragraph (100-200 words) of key attribution-relevant evidence (malware names, unique TTPs, targeting, infrastructure). Do NOT guess the actor name.
+
+  Use empty lists / null when information is absent.
+
+  Example output:
+  {{
+    "attribution": {{
+      "description": "The activity is attributed to a North Korean nexus actor tracked as Lazarus Group, overlapping with Hidden Cobra and BlueNoroff, targeting financial institutions.",
+      "canonical_key": {{"canonical_name": "lazarus group", "aliases": ["hidden cobra", "lazarus", "bluenoroff"]}}
+    }},
+    "timeline": {{
+      "description": "Activity spans from at least 2020 through 2024, with a surge in late 2023.",
+      "canonical_key": {{"start": "2020", "end": "2024"}}
+    }},
+    "behavior": {{
+      "description": "Spear-phishing delivery of a custom RAT against the defense sector, using living-off-the-land binaries.",
+      "canonical_key": {{"tokens": ["spear-phishing", "custom rat", "defense sector", "lotl"]}}
+    }},
+    "campaign": {{
+      "description": "The reports refer to the operation as Operation Dream Job.",
+      "canonical_key": {{"tokens": ["operation dreamjob"]}}
+    }},
+    "attribution_summary": "The report describes ..."
+  }}
+
+  Report text:
+  {text}

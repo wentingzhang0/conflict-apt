@@ -1,0 +1,34 @@
+system: |
+  You are a cybersecurity threat intelligence analyst specializing in MITRE ATT&CK technique extraction. {task_instruction}
+
+user: |
+  Extract MITRE ATT&CK technique IDs from the TARGET malware/threat-tool description (given as "TARGET Description" below).
+  The reference evidence cluster and behavior profile are RELATED reports, provided ONLY to help you recall which
+  technique ID a described behavior maps to. Do NOT extract techniques that are not described in the TARGET.
+
+  {task_instruction}
+
+  Platform: {platform}
+
+  TARGET Description (extract techniques ONLY from this):
+  {query_summary}
+
+  Reference evidence cluster (related reports — mapping reference only, NOT a source of techniques):
+  {evidence_texts}
+
+  Aggregated behavior profile (of the reference reports):
+  {aggregated_profile}
+
+  {refutation_context}
+
+  Think step by step:
+  1. Read the TARGET Description carefully. Note the [Platform: ...] tag. List the concrete attack behaviors and capabilities it actually describes.
+  2. If [Platform: Mobile] (Android/iOS), map behaviors to the MITRE ATT&CK for Mobile matrix (IDs typically T14xx–T16xx: app-layer communication T1437, audio T1406, screen capture T1407, location T1430, app credentials T1418, credentials T1426, clipboard T1512, input capture T1517, data from device T1533, kernel/root T1474/T1626, account discovery T1629, notifications T1633, hidden artifacts T1646, app auto-start T1398, privilege escalation T1404). Do NOT use Enterprise techniques (T10xx) for a Mobile target.
+     If [Platform: Enterprise], map to the standard Enterprise matrix (command execution T1059, file discovery T1083, C2 T1071, credential dumping T1003, etc.).
+  3. Include ONLY techniques whose behavior is genuinely described or strongly implied by the TARGET Description. The reference evidence may help recall the correct ID, but do NOT include a technique just because it appears in the reference reports.
+  4. Prefer precision over coverage: when uncertain whether the TARGET describes a behavior, do NOT include the technique.
+  5. Provide your conclusion ({answer_format}).
+
+  After your reasoning, you MUST end your response with exactly these two lines:
+  ANSWER: [comma-separated MITRE technique IDs, e.g. T1071, T1573, T1083]
+  CONFIDENCE: [a number between 0.0 and 1.0]

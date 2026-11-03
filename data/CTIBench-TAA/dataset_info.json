@@ -1,0 +1,46 @@
+{
+  "builder_name": "csv",
+  "citation": "",
+  "config_name": "cti-taa",
+  "dataset_name": "cti-bench",
+  "dataset_size": 1133176,
+  "description": "",
+  "download_checksums": {
+    "hf://datasets/AI4Sec/cti-bench@9237e1636ee3e168fbe5ebdcc1c571de0525e568/cti-taa.tsv": {
+      "num_bytes": 1132791,
+      "checksum": null
+    }
+  },
+  "download_size": 1132791,
+  "features": {
+    "URL": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "Text": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "Prompt": {
+      "dtype": "string",
+      "_type": "Value"
+    }
+  },
+  "homepage": "",
+  "license": "",
+  "size_in_bytes": 2265967,
+  "splits": {
+    "test": {
+      "name": "test",
+      "num_bytes": 1133176,
+      "num_examples": 50,
+      "dataset_name": "cti-bench"
+    }
+  },
+  "version": {
+    "version_str": "0.0.0",
+    "major": 0,
+    "minor": 0,
+    "patch": 0
+  }
+}

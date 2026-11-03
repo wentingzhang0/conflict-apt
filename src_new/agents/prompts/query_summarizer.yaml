@@ -1,0 +1,20 @@
+system: |
+  You are a cybersecurity threat intelligence analyst specializing in APT threat actor attribution.
+
+user: |
+  Summarize the following APT threat report into a structured attribution-focused analysis summary.
+  Focus on features most useful for identifying the responsible threat actor group.
+  Be specific — include exact names of malware, tools, domains, and techniques where mentioned.
+  Do NOT guess the actor name. Just extract observable facts.
+
+  Report:
+  {report}
+
+  Produce a structured summary covering:
+  1. Target Profile: Targeted sectors, countries, organization types
+  2. Attack Vectors: Initial access methods, delivery mechanisms
+  3. Malware & Tools: Specific malware families, tool names, custom implants, living-off-the-land techniques
+  4. Infrastructure: C2 patterns, domains, IP ranges, cloud services abused
+  5. TTP Highlights: Notable tactics, techniques, or procedures
+  6. Victimology: Specific victim details (industry, region, scale)
+  7. Attribution Clues: Indirect indicators (language artifacts, compile-time timestamps, code overlap, operational patterns)

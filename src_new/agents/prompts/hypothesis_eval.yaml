@@ -1,0 +1,24 @@
+system: |
+  You are a cybersecurity threat intelligence analyst evaluating the quality of analytical hypotheses. {task_instruction}
+
+user: |
+  Evaluate the following analytical hypothesis.
+
+  {task_instruction}
+
+  Report Summary: {query_summary}
+
+  Hypothesis: {answer}
+  Reasoning: {reasoning}
+  Supporting evidence count: {evidence_count}
+
+  Think step by step:
+  1. Examine how well the evidence supports this hypothesis
+  2. Check if multiple independent sources corroborate the conclusion
+  3. Consider whether contradictory evidence undermines the hypothesis
+  4. Assess overall quality
+
+  After your reasoning, you MUST end your response with exactly these three lines:
+  EVIDENCE COVERAGE: [a number between 0.0 and 1.0]
+  REFUTATION ROBUSTNESS: [a number between 0.0 and 1.0]
+  OVERALL: [a number between 0.0 and 1.0]

@@ -1,0 +1,50 @@
+{
+  "builder_name": "csv",
+  "citation": "",
+  "config_name": "cti-rcm",
+  "dataset_name": "cti-bench",
+  "dataset_size": 1001896,
+  "description": "",
+  "download_checksums": {
+    "hf://datasets/AI4Sec/cti-bench@9237e1636ee3e168fbe5ebdcc1c571de0525e568/cti-rcm.tsv": {
+      "num_bytes": 990921,
+      "checksum": null
+    }
+  },
+  "download_size": 990921,
+  "features": {
+    "URL": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "Description": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "Prompt": {
+      "dtype": "string",
+      "_type": "Value"
+    },
+    "GT": {
+      "dtype": "string",
+      "_type": "Value"
+    }
+  },
+  "homepage": "",
+  "license": "",
+  "size_in_bytes": 1992817,
+  "splits": {
+    "test": {
+      "name": "test",
+      "num_bytes": 1001896,
+      "num_examples": 1000,
+      "dataset_name": "cti-bench"
+    }
+  },
+  "version": {
+    "version_str": "0.0.0",
+    "major": 0,
+    "minor": 0,
+    "patch": 0
+  }
+}
